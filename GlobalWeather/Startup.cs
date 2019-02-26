@@ -1,9 +1,13 @@
-﻿using Microsoft.AspNetCore.Builder;
+﻿using GlobalWeather.services;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SpaServices.AngularCli;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Serilog;
+using Weather.Persistence;
+using Weather.Persistence.Repositories;
 
 namespace GlobalWeather
 {
@@ -13,6 +17,9 @@ namespace GlobalWeather
 		{
 			Configuration = configuration;
 			CurrentDirectoryHelpers.SetCurrentDirectory();
+			Log.Logger = new LoggerConfiguration()
+			.ReadFrom.Configuration(Configuration)
+			.CreateLogger();
 		}
 
 		public IConfiguration Configuration { get; }
@@ -20,6 +27,11 @@ namespace GlobalWeather
 		// This method gets called by the runtime. Use this method to add services to the container.
 		public void ConfigureServices(IServiceCollection services)
 		{
+			services.Configure<DbContextSettings>(Configuration);
+			//Inject logger
+			services.AddSingleton(Log.Logger);
+			services.InjectPersistence();
+			services.InjectServices();
 			services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
 			services.AddSpaStaticFiles(configuration =>
 			{
